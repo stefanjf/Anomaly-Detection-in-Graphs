@@ -13,12 +13,13 @@ def natural_key(string_):
 
 start_time = time.clock()
 
-files = glob.glob("datasets/enron/*.txt")
+files = glob.glob("datasets/enron/1*.txt")
 sorted_files = sorted(files, key=natural_key)
 
 # Create directed graph in networkx
 arrayOfGraphs = []
 arrayOfPR = []
+
 for file in sorted_files:
     f = open(file, "r")
     dataGraph = f.readlines()
@@ -39,22 +40,22 @@ for file in sorted_files:
     for a, b in G.edges_iter():
         print str(a) + ":" + str(b) + "  " + str(len(G.edges(a)))
         pr[str(a) + ":" + str(b)] = len(G.edges(a)) * pr[a]  #THIS NEEDS TO BE IMPROVED!!!
-        myhash = hashlib.md5(str(a) + str(b)).hexdigest()
-        hashbinary = bin(int(myhash, 16))[2:]
-        print hashbinary
-
-    binary_list = []
-    for d in hashbinary:
-        if d == 1:
-            binary_list.append(pr[])
-        else:
-            binary_list.append()
 
     arrayOfGraphs.append(G)
     arrayOfPR.append(pr)
 
-#Calculate Quality Scores
-print arrayOfPR
+for key, value in pr.iteritems():
+    myhash = hashlib.md5(str(key) + str(value)).hexdigest()
+    hashbinary = bin(int(myhash, 16))[2:]
+    print hashbinary
+
+#Calculate w list
+binary_list = []
+for d in hashbinary:
+    if d == 1:
+        binary_list.append()
+    else:
+        binary_list.append()
 
 
 
