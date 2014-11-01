@@ -2,6 +2,7 @@ import sys
 import time
 import glob
 import re
+import networkx as nx
 
 def natural_key(string_):
     """See http://www.codinghorror.com/blog/archives/001018.html"""
@@ -10,7 +11,29 @@ def natural_key(string_):
 start_time = time.clock()
 
 files = glob.glob("datasets/enron/*.txt")
-#print sorted(files, key=natural_key)
+sorted_files = sorted(files, key=natural_key)
+
+#Create directed graph in networkx
+arrayOfGraphs = []
+arrayOfPR = []
+for file in sorted_files:
+    f = open(file, "r")
+    dataGraph = f.readlines()
+    G = nx.DiGraph()
+
+    for line in dataGraph:
+        nodeA, nodeB = line.split(" ")
+        nodeA.rstrip('\r\n')
+        nodeB.rstrip('\r\n')
+        nodeB = nodeB[:-1]
+        nodeA = int(nodeA)
+        nodeB = int(nodeB)
+
+        G.add_edge(nodeA, nodeB)
+
+    pr = nx.pagerank(G)
+    arrayOfGraphs.append(G)
+    arrayOfPR.append(pr)
 
 #Define data structures
 Array_Of_Adj_Lists = []
