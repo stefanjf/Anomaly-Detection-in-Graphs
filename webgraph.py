@@ -5,6 +5,7 @@ import re
 import networkx as nx
 import hashlib
 
+
 def natural_key(string_):
     """See http://www.codinghorror.com/blog/archives/001018.html"""
     return [int(s) if s.isdigit() else s for s in re.split(r'(\d+)', string_)]
@@ -12,8 +13,9 @@ def natural_key(string_):
 
 start_time = time.clock()
 
-files = ["datasets/enron/0_enron_by_day.txt", "datasets/enron/1_enron_by_day.txt", "datasets/enron/2_enron_by_day.txt",
-         "datasets/enron/3_enron_by_day.txt", "datasets/enron/4_enron_by_day.txt"]  # glob.glob("datasets/enron/1*.txt")
+# files = ["datasets/enron/0_enron_by_day.txt", "datasets/enron/1_enron_by_day.txt", "datasets/enron/2_enron_by_day.txt",
+# "datasets/enron/3_enron_by_day.txt", "datasets/enron/4_enron_by_day.txt"]  #
+files = glob.glob("datasets/enron/*.txt")
 sorted_files = sorted(files, key=natural_key)
 
 # Create directed graph in networkx
@@ -34,21 +36,22 @@ for file in sorted_files:
         nodeB = int(nodeB)
         G.add_edge(str(nodeA), str(nodeB))
 
-    #Add edges to pagerank object
+    # Add edges to pagerank object
     pr = nx.pagerank(G)
     # Iterate through edges to add to pagerank list
     for a, b in G.edges_iter():
         #print str(a) + ":" + str(b) + "  " + str(len(G.edges(a)))
-        pr[str(a) + ":" + str(b)] = len(G.edges(a)) * pr[a]  #THIS NEEDS TO BE IMPROVED!!!
+        pr[str(a) + " " + str(b)] = len(G.edges(a)) * pr[a]  #THIS NEEDS TO BE IMPROVED!!!
 
     #Convert every key to a md5 hash
-    for key, value in pr.iteritems():
+    for key, value in pr.items():
         myhash = hashlib.sha1(str(key) + str(value)).hexdigest()
         hashbinary = bin(int(myhash, 16))[2:]
         hashbinary = (hashbinary[:128]) if len(hashbinary) > 128 else hashbinary  #Trim to fixed size of 128
         pr[str(hashbinary)] = value
         del pr[key]
 
+    print file
     pageRankNodesEdges.append(pr)
 
 fingerprints = []
@@ -73,23 +76,13 @@ for pr in pageRankNodesEdges:
 
     fingerprints.append(file_fingerprint)
 
-
-hamming = 0.0
-x=0
-for x in range(len(fingerprints)-1):
+x = 0
+for x in range(len(fingerprints) - 1):
+    hamming = 0.0
     for index in range(0, 128):
-        if fingerprints[x][index] != fingerprints[x+1][index]:
+        if fingerprints[x][index] != fingerprints[x + 1][index]:
             hamming += 1
-    print (hamming/128)
-
-
-
-# Write out to file
-f = open('community_output', 'w')
-for x in output.itervalues():
-    for node in x:
-        f.write(str(node) + " ")
-    f.write("\n")
+    print (hamming / 128)
 
 print "Complete"
 print("--- %s seconds ---" % ( time.clock() - start_time))
