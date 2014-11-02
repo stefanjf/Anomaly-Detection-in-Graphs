@@ -115,7 +115,7 @@ print "Median Value: " + str(median)
 thresholdList = []
 tempAvgNumerator = 0
 multiplierForMR = 1
-print "Moving Average:"
+#print "Moving Average:"
 for y in range(len(similarity_scores)-1):
     #Add 1 to y so it starts at the second value (first pair)
     if y == 0:
@@ -133,7 +133,7 @@ for x in range(len(similarity_scores)):
     if x > 1: #No moving average to compare for the first graph
         #Detect two consecutive anomalies
         if (similarity_scores[x] < thresholdList[x-2]) and (similarity_scores[x+1] < thresholdList[x-1]):
-            anomalies[str(x+1)] = abs(similarity_scores[x] - thresholdList[x-2]) + abs(similarity_scores[x+1] - thresholdList[x-1])
+            anomalies[str(x+2)] = abs(similarity_scores[x] - thresholdList[x-2]) + abs(similarity_scores[x+1] - thresholdList[x-1])
 
 ###Output Anomalies###
 #You will list all of the anomalous time points if
@@ -148,21 +148,21 @@ if numOfAnomalies > 100:
         f.write(str(sorted_anomalies[x][0]))
         f.write("\n")
 elif numOfAnomalies < 11:
+    print "There are fewer than 100 anomalies detected, so we will output the top 10"
     for x in numOfAnomalies:
         f.write(str(sorted_anomalies[x][0]))
         f.write("\n")
-
 else:
+    print "There are fewer than 10 anomalies detected, so we will output all of them"
     for x in range(0,10):
         f.write(str(sorted_anomalies[x][0]))
         f.write("\n")
-
 f.close()
 
 print "Complete"
 print("--- %s seconds ---" % ( time.clock() - start_time))
 
-print "Writing out to file..."
+print "Writing out to file."
 #Write out to file
 f = open('sim_score_output', 'w')
 for x in similarity_scores:
