@@ -101,7 +101,7 @@ for x in range(len(all_Fingerprints) - 1):
         if all_Fingerprints[x][index] == all_Fingerprints[x + 1][index]:
             hamming += 1
     hamming_Results.append(1-(hamming/128))
-    print (1-(hamming / 128))
+    print "Similarity score between " + str(x) + " and " + str(x+1) + " : " + str(1-(hamming / 128))
 
 #Calculate median
 median = numpy.median(numpy.array(hamming_Results))
@@ -113,15 +113,15 @@ tempAvgNumerator = 0
 print "Moving Average:"
 for y in range(len(hamming_Results)-1):
     #Add 1 to y so it starts at the second value (first pair)
-    if y == 0:
-        tempAvgNumerator = abs(hamming_Results[y+1]-hamming_Results[y])
-    else:
-        tempAvgNumerator = tempAvgNumerator + abs(hamming_Results[y+1]-hamming_Results[y])
+    tempAvgNumerator = tempAvgNumerator + abs(hamming_Results[y+1]-hamming_Results[y])
 
-    average = median - tempAvgNumerator/(y+1)
-    print average
-    movingRangeAvg.append(average)
-#print movingRangeAvg
+    if y == 0:
+        print "MR for time point " + str(y) + ": N/A"
+    else:
+        average = median - tempAvgNumerator/(y+1)
+        movingRangeAvg.append(average)
+        print "MR for time point " + str(y) + ": " + str(average)
+
 
 
 print "Complete"
