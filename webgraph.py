@@ -6,11 +6,17 @@ import time
 import numpy
 import operator
 import math
+import sys
 
 #This function was copied from http://stackoverflow.com/questions/2545532/python-analog-of-natsort-function-sort-a-list-using-a-natural-order-algorithm
 #It allows for natural sorting for the input files, so they're read in the correct order
 def natural_key(string_):
     return [int(s) if s.isdigit() else s for s in re.split(r'(\d+)', string_)]
+
+#Get command line args
+graphFilePath = sys.argv[1:]
+graphFilePath = str(graphFilePath[0])
+print "Loading files from folder: " + graphFilePath
 
 start_time = time.clock()
 
@@ -18,6 +24,8 @@ start_time = time.clock()
 # files = ["datasets/enron/0_enron_by_day.txt", "datasets/enron/1_enron_by_day.txt", "datasets/enron/2_enron_by_day.txt",
 # "datasets/enron/3_enron_by_day.txt", "datasets/enron/4_enron_by_day.txt"]  #
 files = glob.glob("datasets/enron/*.txt")
+print graphFilePath + "*.txt"
+files = glob.glob(graphFilePath + "*.txt")
 sorted_files = sorted(files, key=natural_key)
 
 # Create directed graph in networkx
@@ -109,7 +117,7 @@ for x in range(len(all_Fingerprints) - 1):
 
 #Calculate median
 median = numpy.median(numpy.array(similarity_scores))
-print "Median Value: " + str(median)
+#print "Median Value: " + str(median)
 
 #Moving Range
 thresholdList = []
@@ -148,21 +156,22 @@ if numOfAnomalies > 100:
         f.write(str(sorted_anomalies[x][0]))
         f.write("\n")
 elif numOfAnomalies < 11:
-    print "There are fewer than 100 anomalies detected, so we will output the top 10"
-    for x in numOfAnomalies:
-        f.write(str(sorted_anomalies[x][0]))
+    print "There are 10 or fewer anomalies detected, so we will output all of them"
+    for x in sorted_anomalies:
+        f.write(str(x[0]))
         f.write("\n")
 else:
-    print "There are fewer than 10 anomalies detected, so we will output all of them"
+    print "There are fewer than 100 anomalies detected, so we will output the top 10"
     for x in range(0,10):
         f.write(str(sorted_anomalies[x][0]))
         f.write("\n")
 f.close()
 
 print "Complete"
-print("--- %s seconds ---" % ( time.clock() - start_time))
+print("--- Total processing took %s seconds ---" % ( time.clock() - start_time))
 
-print "Writing out to file."
+##DEBUGGING AND GRAPHING OUTPUT
+print "Writing out to file: anomalies_output"
 #Write out to file
 f = open('sim_score_output', 'w')
 for x in similarity_scores:
