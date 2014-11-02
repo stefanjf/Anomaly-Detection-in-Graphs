@@ -5,82 +5,97 @@ import re
 import networkx as nx
 import hashlib
 
-
+#This function was copied from http://stackoverflow.com/questions/2545532/python-analog-of-natsort-function-sort-a-list-using-a-natural-order-algorithm
+#It allows for natural sorting for the input files
 def natural_key(string_):
-    """See http://www.codinghorror.com/blog/archives/001018.html"""
     return [int(s) if s.isdigit() else s for s in re.split(r'(\d+)', string_)]
-
 
 start_time = time.clock()
 
+#Load dataset
 # files = ["datasets/enron/0_enron_by_day.txt", "datasets/enron/1_enron_by_day.txt", "datasets/enron/2_enron_by_day.txt",
 # "datasets/enron/3_enron_by_day.txt", "datasets/enron/4_enron_by_day.txt"]  #
 files = glob.glob("datasets/enron/*.txt")
 sorted_files = sorted(files, key=natural_key)
 
 # Create directed graph in networkx
-pageRankNodesEdges = []
+list_All_Feature_Set = []
 
+#Loop through each graph file
 for file in sorted_files:
     f = open(file, "r")
     dataGraph = f.readlines()
+
+    #Create networkx graph object
     G = nx.DiGraph()
 
-    # Add nodes to Graph object
+    # Add edges to Graph object from input file
     for line in dataGraph:
         nodeA, nodeB = line.split(" ")
-        nodeA.rstrip('\r\n')
-        nodeB.rstrip('\r\n')
-        nodeB = nodeB[:-1]
-        nodeA = int(nodeA)
-        nodeB = int(nodeB)
         G.add_edge(str(nodeA), str(nodeB))
 
-    # Add edges to pagerank object
-    pr = nx.pagerank(G)
-    # Iterate through edges to add to pagerank list
+    #Generate dictionary with pagerank (quality) values for each node
+    weighted_Feature_Set = nx.pagerank(G)
+
+    #Add edge "quality" from graph to weighted feature set
     for a, b in G.edges_iter():
-        #print str(a) + ":" + str(b) + "  " + str(len(G.edges(a)))
-        pr[str(a) + " " + str(b)] = len(G.edges(a)) * pr[a]  #THIS NEEDS TO BE IMPROVED!!!
+        weighted_Feature_Set[str(a) + " " + str(b)] = len(G.edges(a)) * weighted_Feature_Set[a]
+    #THIS NEEDS TO BE IMPROVED!!!
 
     #Convert every key to a md5 hash
-    for key, value in pr.items():
-        myhash = hashlib.sha1(str(key) + str(value)).hexdigest()
-        hashbinary = bin(int(myhash, 16))[2:]
-        hashbinary = (hashbinary[:128]) if len(hashbinary) > 128 else hashbinary  #Trim to fixed size of 128
-        pr[str(hashbinary)] = value
-        del pr[key]
+    for key, value in weighted_Feature_Set.items():
+        sha1_hash = hashlib.sha1(str(key) + str(value)).hexdigest()
+        binary_hash = bin(int(sha1_hash, 16))[2:]
+        #Trim to fixed size of 128
+        binary_hash = (binary_hash[:128]) if len(binary_hash) > 128 else binary_hash
+        #Add sha1 hash with corresponding value to feature set
+        weighted_Feature_Set[str(binary_hash)] = value
+        #Remove original key/value from feature set
+        del weighted_Feature_Set[key]
 
-    print file
-    pageRankNodesEdges.append(pr)
+    #Add file
+    list_All_Feature_Set.append(weighted_Feature_Set)
 
-fingerprints = []
-# Calculate w list
-for pr in pageRankNodesEdges:
-    FINAL_list = []
-    for key, val in pr.iteritems():
+    print "Processed file: " + file
+
+#List of all document fingerprints
+all_Fingerprints = []
+
+#Loop through each feature set to generate it's fingerprint
+for feature_Set in list_All_Feature_Set:
+    temp_fingerprint = []
+    #Build fingerprint
+    for key, val in feature_Set.iteritems():
         binary_list = []
+        #For each sha1 hash, if digit=1 then add weighted value. If digit=0, then add negative weighted value.
         for d in key:
             if int(d) == 1:
                 binary_list.append(val)
             else:
                 binary_list.append(-val)
-        FINAL_list.append(binary_list)
+        temp_fingerprint.append(binary_list)
 
-    file_fingerprint = [sum(x) for x in zip(*FINAL_list)]
-    for index, item in enumerate(file_fingerprint):
+    #Calculate fingerprint by summing all the columns in temp_fingerprint
+    fingerprint = [sum(x) for x in zip(*temp_fingerprint)]
+
+    #Convert all positive vals to '1' and all negative vals to '0' in fingerprint
+    for index, item in enumerate(fingerprint):
         if item > 0:
-            file_fingerprint[index] = 1
+            fingerprint[index] = 1
         else:
-            file_fingerprint[index] = 0
+            fingerprint[index] = 0
 
-    fingerprints.append(file_fingerprint)
+    #Add fingerprint to list
+    all_Fingerprints.append(fingerprint)
 
+#Post Processing
+#Calculate hamming distance between each sequential pair of fingerprints
 x = 0
-for x in range(len(fingerprints) - 1):
+for x in range(len(all_Fingerprints) - 1):
     hamming = 0.0
+    #Calculate hamming distance
     for index in range(0, 128):
-        if fingerprints[x][index] != fingerprints[x + 1][index]:
+        if all_Fingerprints[x][index] != all_Fingerprints[x + 1][index]:
             hamming += 1
     print (hamming / 128)
 
