@@ -118,7 +118,7 @@ for y in range(len(hamming_Results)-1):
     else:
         tempAvgNumerator = tempAvgNumerator + abs(hamming_Results[y+1]-hamming_Results[y])
 
-    average = median + tempAvgNumerator/(y+1)
+    average = median - tempAvgNumerator/(y+1)
     print average
     movingRangeAvg.append(average)
 #print movingRangeAvg
