@@ -1,9 +1,10 @@
-import sys
-import time
 import glob
 import re
-import networkx as nx
 import hashlib
+import networkx as nx
+import time
+import numpy
+
 
 #This function was copied from http://stackoverflow.com/questions/2545532/python-analog-of-natsort-function-sort-a-list-using-a-natural-order-algorithm
 #It allows for natural sorting for the input files
@@ -88,16 +89,40 @@ for feature_Set in list_All_Feature_Set:
     #Add fingerprint to list
     all_Fingerprints.append(fingerprint)
 
-#Post Processing
+
+###Post Processing###
+hamming_Results = []
 #Calculate hamming distance between each sequential pair of fingerprints
 x = 0
 for x in range(len(all_Fingerprints) - 1):
     hamming = 0.0
     #Calculate hamming distance
     for index in range(0, 128):
-        if all_Fingerprints[x][index] != all_Fingerprints[x + 1][index]:
+        if all_Fingerprints[x][index] == all_Fingerprints[x + 1][index]:
             hamming += 1
-    print (hamming / 128)
+    hamming_Results.append(1-(hamming/128))
+    print (1-(hamming / 128))
+
+#Calculate median
+median = numpy.median(numpy.array(hamming_Results))
+print "Median Value: " + str(median)
+
+#Moving Range
+movingRangeAvg = []
+tempAvgNumerator = 0
+print "Moving Average:"
+for y in range(len(hamming_Results)-1):
+    #Add 1 to y so it starts at the second value (first pair)
+    if y == 0:
+        tempAvgNumerator = abs(hamming_Results[y+1]-hamming_Results[y])
+    else:
+        tempAvgNumerator = tempAvgNumerator + abs(hamming_Results[y+1]-hamming_Results[y])
+
+    average = median + tempAvgNumerator/(y+1)
+    print average
+    movingRangeAvg.append(average)
+#print movingRangeAvg
+
 
 print "Complete"
 print("--- %s seconds ---" % ( time.clock() - start_time))
