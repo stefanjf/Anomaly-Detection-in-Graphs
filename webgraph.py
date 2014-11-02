@@ -4,7 +4,8 @@ import hashlib
 import networkx as nx
 import time
 import numpy
-
+import operator
+import math
 
 #This function was copied from http://stackoverflow.com/questions/2545532/python-analog-of-natsort-function-sort-a-list-using-a-natural-order-algorithm
 #It allows for natural sorting for the input files, so they're read in the correct order
@@ -104,7 +105,7 @@ for x in range(len(all_Fingerprints) - 1):
         if all_Fingerprints[x][index] == all_Fingerprints[x + 1][index]:
             hamming += 1
     similarity_scores.append(1-(hamming/128))
-    print "Similarity score between " + str(x) + " and " + str(x+1) + " : " + str(1-(hamming / 128))
+    #print "Similarity score between " + str(x) + " and " + str(x+1) + " : " + str(1-(hamming / 128))
 
 #Calculate median
 median = numpy.median(numpy.array(similarity_scores))
@@ -124,8 +125,7 @@ for y in range(len(similarity_scores)-1):
         tempAvgNumerator = tempAvgNumerator + abs(similarity_scores[y+1]-similarity_scores[y])
         threshold = median - (multiplierForMR*tempAvgNumerator/(y+1))
         thresholdList.append(threshold)
-        #print "MR for time point " + str(y) + ": " + str(threshold)
-        print threshold
+        #print threshold
 
 #Detect anomalies
 anomalies = {}
@@ -134,15 +134,30 @@ for x in range(len(similarity_scores)):
         #Detect two consecutive anomalies
         if (similarity_scores[x] < thresholdList[x-2]) and (similarity_scores[x+1] < thresholdList[x-1]):
             anomalies[str(x+1)] = abs(similarity_scores[x] - thresholdList[x-2]) + abs(similarity_scores[x+1] - thresholdList[x-1])
+
+###Output Anomalies###
 #You will list all of the anomalous time points if
 #there are fewer than 10, the top 10 if there are fewer than 100, or the top 10% if there are
 #more than 100.
-#f = open('output', 'w')
-#f.write(str(x))
-#f.write("\n")
-#f.close()
+f = open('anomalies_output', 'w')
+sorted_anomalies = sorted(anomalies.items(), key=operator.itemgetter(1), reverse=True)
+numOfAnomalies = len(sorted_anomalies)
+if numOfAnomalies > 100:
+    print "There are more than 100 anomalies detected, so we will output the top 10%"
+    for x in range(math.ceil(0.1*len(numOfAnomalies))):
+        f.write(str(sorted_anomalies[x][0]))
+        f.write("\n")
+elif numOfAnomalies < 11:
+    for x in numOfAnomalies:
+        f.write(str(sorted_anomalies[x][0]))
+        f.write("\n")
 
+else:
+    for x in range(0,10):
+        f.write(str(sorted_anomalies[x][0]))
+        f.write("\n")
 
+f.close()
 
 print "Complete"
 print("--- %s seconds ---" % ( time.clock() - start_time))
