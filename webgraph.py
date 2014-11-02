@@ -43,8 +43,9 @@ for file in sorted_files:
 
     #Convert every key to a md5 hash
     for key, value in pr.iteritems():
-        myhash = hashlib.md5(str(key) + str(value)).hexdigest()
+        myhash = hashlib.sha1(str(key) + str(value)).hexdigest()
         hashbinary = bin(int(myhash, 16))[2:]
+        hashbinary = (hashbinary[:128]) if len(hashbinary) > 128 else hashbinary #Trim to fixed size of 128
         pr[str(hashbinary)] = value
         del pr[key]
 
@@ -52,8 +53,8 @@ for file in sorted_files:
 
 
 # Calculate w list
-FINAL_list = []
 for pr in pageRankNodesEdges:
+    FINAL_list = []
     for key, val in pr.iteritems():
         binary_list = []
         for d in key:
