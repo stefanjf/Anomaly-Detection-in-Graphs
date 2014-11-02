@@ -13,7 +13,7 @@ def natural_key(string_):
 
 start_time = time.clock()
 
-files = ["datasets/enron/0_enron_by_day.txt","datasets/enron/1_enron_by_day.txt"]#glob.glob("datasets/enron/1*.txt")
+files = ["datasets/enron/0_enron_by_day.txt","datasets/enron/1_enron_by_day.txt","datasets/enron/2_enron_by_day.txt","datasets/enron/3_enron_by_day.txt","datasets/enron/4_enron_by_day.txt"]#glob.glob("datasets/enron/1*.txt")
 sorted_files = sorted(files, key=natural_key)
 
 # Create directed graph in networkx
@@ -38,22 +38,23 @@ for file in sorted_files:
     pr = nx.pagerank(G)
     # Iterate through edges to add to pagerank list
     for a, b in G.edges_iter():
-        print str(a) + ":" + str(b) + "  " + str(len(G.edges(a)))
+        #print str(a) + ":" + str(b) + "  " + str(len(G.edges(a)))
         pr[str(a) + ":" + str(b)] = len(G.edges(a)) * pr[a]  #THIS NEEDS TO BE IMPROVED!!!
 
-    pageRankNodesEdges.append(pr)
-
+    #Convert every key to a md5 hash
     for key, value in pr.iteritems():
         myhash = hashlib.md5(str(key) + str(value)).hexdigest()
         hashbinary = bin(int(myhash, 16))[2:]
-        pr[hashbinary] = pr[key]
+        pr[str(hashbinary)] = value
         del pr[key]
+
+    pageRankNodesEdges.append(pr)
 
 
 # Calculate w list
 FINAL_list = []
-for pr_dict in pageRankNodesEdges:
-    for key, val in pr_dict.iteritems():
+for pr in pageRankNodesEdges:
+    for key, val in pr.iteritems():
         binary_list = []
         for d in key:
             if int(d) == 1:
@@ -62,14 +63,16 @@ for pr_dict in pageRankNodesEdges:
                 binary_list.append(-val)
         FINAL_list.append(binary_list)
 
-file_fingerprint = [sum(x) for x in zip(*FINAL_list)]
-for index, item in enumerate(file_fingerprint):
-    if item > 0:
-        file_fingerprint[index] = 1
-    else:
-        file_fingerprint[index] = 0
+    print FINAL_list
+    file_fingerprint = []
+    file_fingerprint = [sum(x) for x in zip(*FINAL_list)]
+    for index, item in enumerate(file_fingerprint):
+        if item > 0:
+            file_fingerprint[index] = 1
+        else:
+            file_fingerprint[index] = 0
 
-print file_fingerprint
+    print file_fingerprint
 
 
 
