@@ -108,19 +108,20 @@ median = numpy.median(numpy.array(hamming_Results))
 print "Median Value: " + str(median)
 
 #Moving Range
-movingRangeAvg = []
+thresholdList = []
 tempAvgNumerator = 0
 print "Moving Average:"
 for y in range(len(hamming_Results)-1):
     #Add 1 to y so it starts at the second value (first pair)
-    tempAvgNumerator = tempAvgNumerator + abs(hamming_Results[y+1]-hamming_Results[y])
-
     if y == 0:
-        print "MR for time point " + str(y) + ": N/A"
+        tempAvgNumerator = 0
+        #print "MR for time point " + str(y) + ": N/A"
     else:
-        average = median - tempAvgNumerator/(y+1)
-        movingRangeAvg.append(average)
-        print "MR for time point " + str(y) + ": " + str(average)
+        tempAvgNumerator = tempAvgNumerator + abs(hamming_Results[y+1]-hamming_Results[y])
+        threshold = median - tempAvgNumerator/(y+1)
+        thresholdList.append(threshold)
+        #print "MR for time point " + str(y) + ": " + str(threshold)
+        print threshold
 
 
 
