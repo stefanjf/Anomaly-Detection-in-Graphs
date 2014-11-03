@@ -14,8 +14,9 @@ def natural_key(string_):
     return [int(s) if s.isdigit() else s for s in re.split(r'(\d+)', string_)]
 
 #Get command line args
-graphFilePath = sys.argv[1:]
-graphFilePath = str(graphFilePath[0])
+##graphFilePath = sys.argv[1:]
+##graphFilePath = str(graphFilePath[0])
+graphFilePath = ""
 print "Loading files from folder: " + graphFilePath
 
 start_time = time.clock()
@@ -23,9 +24,9 @@ start_time = time.clock()
 #Load dataset
 # files = ["datasets/enron/0_enron_by_day.txt", "datasets/enron/1_enron_by_day.txt", "datasets/enron/2_enron_by_day.txt",
 # "datasets/enron/3_enron_by_day.txt", "datasets/enron/4_enron_by_day.txt"]  #
-files = glob.glob("datasets/enron/*.txt")
 print graphFilePath + "*.txt"
 files = glob.glob(graphFilePath + "*.txt")
+files = glob.glob("datasets/enron/*.txt")
 sorted_files = sorted(files, key=natural_key)
 
 # Create directed graph in networkx
@@ -102,10 +103,8 @@ for feature_Set in list_All_Feature_Set:
     all_Fingerprints.append(fingerprint)
 
 
-###Post Processing###
+#Calculate similarity scores (hamming distance) between each sequential pair of fingerprints
 similarity_scores = []
-#Calculate hamming distance between each sequential pair of fingerprints
-x = 0
 for x in range(len(all_Fingerprints) - 1):
     hamming = 0.0
     #Calculate hamming distance
@@ -115,33 +114,29 @@ for x in range(len(all_Fingerprints) - 1):
     similarity_scores.append(1-(hamming/128))
     #print "Similarity score between " + str(x) + " and " + str(x+1) + " : " + str(1-(hamming / 128))
 
-#Calculate median
+#Moving Range Average
 median = numpy.median(numpy.array(similarity_scores))
-#print "Median Value: " + str(median)
-
-#Moving Range
 thresholdList = []
 tempAvgNumerator = 0
 multiplierForMR = 1
-#print "Moving Average:"
-for y in range(len(similarity_scores)-1):
-    #Add 1 to y so it starts at the second value (first pair)
+for y in range(len(similarity_scores)):
     if y == 0:
         tempAvgNumerator = 0
-        #print "MR for time point " + str(y) + ": N/A"
+        thresholdList.append(0)
     else:
-        tempAvgNumerator = tempAvgNumerator + abs(similarity_scores[y+1]-similarity_scores[y])
-        threshold = median - (multiplierForMR*tempAvgNumerator/(y+1))
+        tempAvgNumerator = tempAvgNumerator + abs(similarity_scores[y]-similarity_scores[y-1])
+        threshold = median - (multiplierForMR*tempAvgNumerator/y)
         thresholdList.append(threshold)
-        #print threshold
 
-#Detect anomalies
+#Detect anomalies || Look for two consecutive below threshold
 anomalies = {}
-for x in range(len(similarity_scores)):
-    if x > 1: #No moving average to compare for the first graph
-        #Detect two consecutive anomalies
-        if (similarity_scores[x] < thresholdList[x-2]) and (similarity_scores[x+1] < thresholdList[x-1]):
-            anomalies[str(x+2)] = abs(similarity_scores[x] - thresholdList[x-2]) + abs(similarity_scores[x+1] - thresholdList[x-1])
+anomaliesscore = {}
+score = []
+for x in range(len(similarity_scores)-1):
+    #Detect two consecutive anomalies
+    if (similarity_scores[x] < thresholdList[x]) and (similarity_scores[x+1] < thresholdList[x+1]):
+        anomalies[str(x+1)] = abs(similarity_scores[x] - thresholdList[x]) + abs(similarity_scores[x+1] - thresholdList[x+1])
+        anomaliesscore[str(x+1)] = similarity_scores[x+1]
 
 ###Output Anomalies###
 #You will list all of the anomalous time points if
@@ -151,19 +146,19 @@ f = open('anomalies_output', 'w')
 sorted_anomalies = sorted(anomalies.items(), key=operator.itemgetter(1), reverse=True)
 numOfAnomalies = len(sorted_anomalies)
 if numOfAnomalies > 100:
-    print "There are more than 100 anomalies detected, so we will output the top 10%"
-    for x in range(math.ceil(0.1*len(numOfAnomalies))):
+    print "There are " + str(numOfAnomalies) + " anomalies found, so we will output the top 10%"
+    for x in range(0,int(math.ceil(0.1*len(sorted_anomalies)))):
         f.write(str(sorted_anomalies[x][0]))
         f.write("\n")
-elif numOfAnomalies < 11:
-    print "There are 10 or fewer anomalies detected, so we will output all of them"
-    for x in sorted_anomalies:
-        f.write(str(x[0]))
-        f.write("\n")
-else:
-    print "There are fewer than 100 anomalies detected, so we will output the top 10"
+elif numOfAnomalies > 1100:
+    print "There are " + str(numOfAnomalies) + " anomalies found, so we will output the top 10"
     for x in range(0,10):
         f.write(str(sorted_anomalies[x][0]))
+        f.write("\n")
+else:
+    print "There are " + str(numOfAnomalies) + " anomalies found, so we will output all of them"
+    for x in sorted_anomalies:
+        f.write(str(x[0]))
         f.write("\n")
 f.close()
 
@@ -173,7 +168,7 @@ print("--- Total processing took %s seconds ---" % ( time.clock() - start_time))
 ##DEBUGGING AND GRAPHING OUTPUT
 print "Writing out to file: anomalies_output"
 #Write out to file
-f = open('sim_score_output', 'w')
+f = open('score', 'w')
 for x in similarity_scores:
     f.write(str(x))
     f.write("\n")
