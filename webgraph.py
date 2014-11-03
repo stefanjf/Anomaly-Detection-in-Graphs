@@ -14,9 +14,9 @@ def natural_key(string_):
     return [int(s) if s.isdigit() else s for s in re.split(r'(\d+)', string_)]
 
 #Get command line args
-##graphFilePath = sys.argv[1:]
-##graphFilePath = str(graphFilePath[0])
-graphFilePath = ""
+graphFilePath = sys.argv[1:]
+graphFilePath = str(graphFilePath[0])
+#graphFilePath = ""
 print "Loading files from folder: " + graphFilePath
 
 start_time = time.clock()
@@ -26,7 +26,7 @@ start_time = time.clock()
 # "datasets/enron/3_enron_by_day.txt", "datasets/enron/4_enron_by_day.txt"]  #
 print graphFilePath + "*.txt"
 files = glob.glob(graphFilePath + "*.txt")
-files = glob.glob("datasets/enron/*.txt")
+#files = glob.glob("datasets/enron/*.txt")
 sorted_files = sorted(files, key=natural_key)
 
 # Create directed graph in networkx
@@ -150,7 +150,7 @@ if numOfAnomalies > 100:
     for x in range(0,int(math.ceil(0.1*len(sorted_anomalies)))):
         f.write(str(sorted_anomalies[x][0]))
         f.write("\n")
-elif numOfAnomalies > 1100:
+elif numOfAnomalies > 11:
     print "There are " + str(numOfAnomalies) + " anomalies found, so we will output the top 10"
     for x in range(0,10):
         f.write(str(sorted_anomalies[x][0]))
@@ -168,7 +168,7 @@ print("--- Total processing took %s seconds ---" % ( time.clock() - start_time))
 ##DEBUGGING AND GRAPHING OUTPUT
 print "Writing out to file: anomalies_output"
 #Write out to file
-f = open('score', 'w')
+f = open('similarity_scores', 'w')
 for x in similarity_scores:
     f.write(str(x))
     f.write("\n")
