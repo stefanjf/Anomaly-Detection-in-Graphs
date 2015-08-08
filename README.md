@@ -4,7 +4,7 @@ Script to detect anomalies in graph that changes over time.
 
 Example:
 ```python
->>python webgraph.py datasets\enron\
+>>python webgraph.py datasets/enron/
 ```
 NOTE: Path must include the trailing slash
 
